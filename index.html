@@ -1,1 +1,952 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mundo de Rompecabezas</title>
+    <link href="https://cdn.jsdelivr.net/npm/fontsource-poppins@4.0.0/index.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .hero-image {
+            width: 100%;
+            max-width: 800px;
+            height: 300px;
+            margin: 30px auto;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .hero-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .game-selector {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+
+        .game-btn {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+
+        .game-btn.sliding {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .game-btn.memory {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .game-btn.jigsaw {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+
+        .game-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .game-btn.active {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        .game-area {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin: 30px 0;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            display: none;
+        }
+
+        .game-area.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .game-title {
+            text-align: center;
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 30px;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+        }
+
+        .control-btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn.restart {
+            background: #667eea;
+            color: white;
+        }
+
+        .control-btn.hint {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Sliding Puzzle */
+        .sliding-puzzle {
+            display: grid;
+            gap: 5px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .sliding-tile {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .sliding-tile:hover {
+            transform: scale(1.05);
+        }
+
+        .sliding-tile.empty {
+            background: #f0f0f0;
+            cursor: default;
+        }
+
+        .sliding-tile.correct {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        /* Memory Game */
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .memory-card {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            transition: all 0.3s ease;
+            transform-style: preserve-3d;
+            position: relative;
+        }
+
+        .memory-card.flipped {
+            background: white;
+            border: 3px solid #667eea;
+        }
+
+        .memory-card.matched {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            cursor: default;
+        }
+
+        .memory-card-content {
+            display: none;
+        }
+
+        .memory-card.flipped .memory-card-content,
+        .memory-card.matched .memory-card-content {
+            display: block;
+        }
+
+        /* Jigsaw Puzzle */
+        .jigsaw-container {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .jigsaw-board {
+            width: 400px;
+            height: 400px;
+            background: #f0f0f0;
+            border-radius: 15px;
+            position: relative;
+            border: 3px dashed #667eea;
+        }
+
+        .jigsaw-pieces {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 400px;
+        }
+
+        .jigsaw-piece {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            cursor: grab;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        .jigsaw-piece:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .jigsaw-piece.placed {
+            opacity: 0.3;
+            cursor: default;
+        }
+
+        .drop-zone {
+            position: absolute;
+            width: 133px;
+            height: 133px;
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .drop-zone.filled {
+            border: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        /* Victory Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-content h2 {
+            font-size: 2.5rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .modal-content p {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .modal-btn {
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #f093fb;
+            animation: fall 3s linear forwards;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .hero-image {
+                height: 200px;
+            }
+
+            .game-area {
+                padding: 20px;
+            }
+
+            .memory-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 10px;
+            }
+
+            .jigsaw-board {
+                width: 300px;
+                height: 300px;
+            }
+
+            .drop-zone {
+                width: 100px;
+                height: 100px;
+            }
+        }
+
+        .difficulty-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .difficulty-btn {
+            padding: 8px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .difficulty-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .difficulty-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧩 Mundo de Rompecabezas</h1>
+            <p>¡Desafía tu mente con nuestros juegos interactivos!</p>
+        </header>
+
+        <div class="hero-image">
+            <img src="https://image.qwenlm.ai/public_source/79a00899-afdf-47d8-b348-9dc888f1b6d7/1bb26abaa-6ce2-427f-b4ea-261a1b2c9434.png" alt="Piezas de rompecabezas coloridas">
+        </div>
+
+        <div class="game-selector">
+            <button class="game-btn sliding active" onclick="selectGame('sliding')">🔢 Rompecabezas Deslizante</button>
+            <button class="game-btn memory" onclick="selectGame('memory')">🎴 Memoria</button>
+            <button class="game-btn jigsaw" onclick="selectGame('jigsaw')">🧩 Rompecabezas Clásico</button>
+        </div>
+
+        <!-- Sliding Puzzle -->
+        <div id="sliding-game" class="game-area active">
+            <h2 class="game-title">Rompecabezas Deslizante</h2>
+            <div class="difficulty-selector">
+                <button class="difficulty-btn active" onclick="setSlidingDifficulty(3)">3x3</button>
+                <button class="difficulty-btn" onclick="setSlidingDifficulty(4)">4x4</button>
+                <button class="difficulty-btn" onclick="setSlidingDifficulty(5)">5x5</button>
+            </div>
+            <div class="game-info">
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-label">Movimientos</div>
+                        <div class="stat-value" id="sliding-moves">0</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Tiempo</div>
+                        <div class="stat-value" id="sliding-time">0:00</div>
+                    </div>
+                </div>
+                <div class="controls">
+                    <button class="control-btn restart" onclick="initSlidingPuzzle()">🔄 Reiniciar</button>
+                    <button class="control-btn hint" onclick="showSlidingHint()">💡 Pista</button>
+                </div>
+            </div>
+            <div id="sliding-board" class="sliding-puzzle"></div>
+        </div>
+
+        <!-- Memory Game -->
+        <div id="memory-game" class="game-area">
+            <h2 class="game-title">Juego de Memoria</h2>
+            <div class="game-info">
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-label">Intentos</div>
+                        <div class="stat-value" id="memory-attempts">0</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Pares</div>
+                        <div class="stat-value" id="memory-pairs">0/8</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Tiempo</div>
+                        <div class="stat-value" id="memory-time">0:00</div>
+                    </div>
+                </div>
+                <div class="controls">
+                    <button class="control-btn restart" onclick="initMemoryGame()">🔄 Reiniciar</button>
+                </div>
+            </div>
+            <div id="memory-board" class="memory-grid"></div>
+        </div>
+
+        <!-- Jigsaw Puzzle -->
+        <div id="jigsaw-game" class="game-area">
+            <h2 class="game-title">Rompecabezas Clásico</h2>
+            <div class="game-info">
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-label">Piezas Colocadas</div>
+                        <div class="stat-value" id="jigsaw-placed">0/9</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Tiempo</div>
+                        <div class="stat-value" id="jigsaw-time">0:00</div>
+                    </div>
+                </div>
+                <div class="controls">
+                    <button class="control-btn restart" onclick="initJigsawPuzzle()">🔄 Reiniciar</button>
+                </div>
+            </div>
+            <div class="jigsaw-container">
+                <div id="jigsaw-board" class="jigsaw-board"></div>
+                <div id="jigsaw-pieces" class="jigsaw-pieces"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victory-modal" class="modal">
+        <div class="modal-content">
+            <h2>🎉 ¡Felicidades!</h2>
+            <p id="victory-message">¡Has completado el rompecabezas!</p>
+            <button class="modal-btn" onclick="closeModal()">¡Jugar de Nuevo!</button>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        let currentGame = 'sliding';
+        let slidingSize = 3;
+        let slidingMoves = 0;
+        let slidingTime = 0;
+        let slidingTimer = null;
+        let memoryAttempts = 0;
+        let memoryPairs = 0;
+        let memoryTime = 0;
+        let memoryTimer = null;
+        let flippedCards = [];
+        let jigsawPlaced = 0;
+        let jigsawTime = 0;
+        let jigsawTimer = null;
+        let draggedPiece = null;
+
+        // Emojis for memory game
+        const memoryEmojis = ['🐶', '🐱', '', '🐹', '🐰', '🦊', '', '🐼'];
+
+        // Select Game
+        function selectGame(game) {
+            currentGame = game;
+            document.querySelectorAll('.game-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.game-area').forEach(area => area.classList.remove('active'));
+            
+            document.querySelector(`.game-btn.${game}`).classList.add('active');
+            document.getElementById(`${game}-game`).classList.add('active');
+
+            // Stop all timers
+            stopAllTimers();
+
+            // Initialize selected game
+            if (game === 'sliding') initSlidingPuzzle();
+            else if (game === 'memory') initMemoryGame();
+            else if (game === 'jigsaw') initJigsawPuzzle();
+        }
+
+        function stopAllTimers() {
+            if (slidingTimer) clearInterval(slidingTimer);
+            if (memoryTimer) clearInterval(memoryTimer);
+            if (jigsawTimer) clearInterval(jigsawTimer);
+        }
+
+        // Sliding Puzzle Functions
+        function setSlidingDifficulty(size) {
+            slidingSize = size;
+            document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            initSlidingPuzzle();
+        }
+
+        function initSlidingPuzzle() {
+            stopAllTimers();
+            slidingMoves = 0;
+            slidingTime = 0;
+            document.getElementById('sliding-moves').textContent = '0';
+            document.getElementById('sliding-time').textContent = '0:00';
+
+            const board = document.getElementById('sliding-board');
+            board.style.gridTemplateColumns = `repeat(${slidingSize}, 1fr)`;
+            board.innerHTML = '';
+
+            // Create solved state
+            let tiles = [];
+            for (let i = 1; i < slidingSize * slidingSize; i++) {
+                tiles.push(i);
+            }
+            tiles.push(0); // Empty tile
+
+            // Shuffle
+            tiles = shuffleSliding(tiles);
+
+            // Create tiles
+            tiles.forEach((tile, index) => {
+                const tileEl = document.createElement('div');
+                tileEl.className = `sliding-tile ${tile === 0 ? 'empty' : ''}`;
+                tileEl.textContent = tile === 0 ? '' : tile;
+                tileEl.dataset.value = tile;
+                tileEl.dataset.index = index;
+                tileEl.onclick = () => moveSlidingTile(index);
+                board.appendChild(tileEl);
+            });
+
+            slidingTimer = setInterval(() => {
+                slidingTime++;
+                const mins = Math.floor(slidingTime / 60);
+                const secs = slidingTime % 60;
+                document.getElementById('sliding-time').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function shuffleSliding(tiles) {
+            let shuffled = [...tiles];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            // Ensure solvable
+            if (!isSolvable(shuffled)) {
+                return shuffleSliding(tiles);
+            }
+            return shuffled;
+        }
+
+        function isSolvable(tiles) {
+            let inversions = 0;
+            for (let i = 0; i < tiles.length - 1; i++) {
+                for (let j = i + 1; j < tiles.length; j++) {
+                    if (tiles[i] !== 0 && tiles[j] !== 0 && tiles[i] > tiles[j]) {
+                        inversions++;
+                    }
+                }
+            }
+            if (slidingSize % 2 === 1) {
+                return inversions % 2 === 0;
+            } else {
+                const emptyRow = Math.floor(tiles.indexOf(0) / slidingSize);
+                return (inversions + emptyRow) % 2 === 1;
+            }
+        }
+
+        function moveSlidingTile(index) {
+            const tiles = document.querySelectorAll('.sliding-tile');
+            const emptyIndex = Array.from(tiles).findIndex(t => t.dataset.value == '0');
+            
+            const row = Math.floor(index / slidingSize);
+            const col = index % slidingSize;
+            const emptyRow = Math.floor(emptyIndex / slidingSize);
+            const emptyCol = emptyIndex % slidingSize;
+
+            const isAdjacent = (Math.abs(row - emptyRow) + Math.abs(col - emptyCol)) === 1;
+
+            if (isAdjacent) {
+                // Swap
+                const temp = tiles[index].dataset.value;
+                tiles[index].dataset.value = tiles[emptyIndex].dataset.value;
+                tiles[emptyIndex].dataset.value = temp;
+
+                tiles[index].textContent = tiles[index].dataset.value == '0' ? '' : tiles[index].dataset.value;
+                tiles[emptyIndex].textContent = tiles[emptyIndex].dataset.value == '0' ? '' : tiles[emptyIndex].dataset.value;
+
+                tiles[index].classList.toggle('empty', tiles[index].dataset.value == '0');
+                tiles[emptyIndex].classList.toggle('empty', tiles[emptyIndex].dataset.value == '0');
+
+                slidingMoves++;
+                document.getElementById('sliding-moves').textContent = slidingMoves;
+
+                checkSlidingWin();
+            }
+        }
+
+        function checkSlidingWin() {
+            const tiles = document.querySelectorAll('.sliding-tile');
+            let isWin = true;
+            for (let i = 0; i < tiles.length - 1; i++) {
+                if (tiles[i].dataset.value != i + 1) {
+                    isWin = false;
+                    break;
+                }
+            }
+
+            if (isWin) {
+                stopAllTimers();
+                tiles.forEach(tile => tile.classList.add('correct'));
+                showVictory(`¡Completado en ${slidingMoves} movimientos y ${formatTime(slidingTime)}!`);
+            }
+        }
+
+        function showSlidingHint() {
+            const tiles = document.querySelectorAll('.sliding-tile');
+            tiles.forEach((tile, index) => {
+                const expectedValue = (index + 1) % (slidingSize * slidingSize);
+                if (tile.dataset.value == expectedValue) {
+                    tile.style.animation = 'pulse 0.5s ease 3';
+                }
+            });
+        }
+
+        // Memory Game Functions
+        function initMemoryGame() {
+            stopAllTimers();
+            memoryAttempts = 0;
+            memoryPairs = 0;
+            memoryTime = 0;
+            flippedCards = [];
+            document.getElementById('memory-attempts').textContent = '0';
+            document.getElementById('memory-pairs').textContent = '0/8';
+            document.getElementById('memory-time').textContent = '0:00';
+
+            const board = document.getElementById('memory-board');
+            board.innerHTML = '';
+
+            // Create pairs
+            let cards = [...memoryEmojis, ...memoryEmojis];
+            cards = cards.sort(() => Math.random() - 0.5);
+
+            cards.forEach((emoji, index) => {
+                const card = document.createElement('div');
+                card.className = 'memory-card';
+                card.dataset.emoji = emoji;
+                card.dataset.index = index;
+                card.innerHTML = `<span class="memory-card-content">${emoji}</span>`;
+                card.onclick = () => flipCard(card);
+                board.appendChild(card);
+            });
+
+            memoryTimer = setInterval(() => {
+                memoryTime++;
+                const mins = Math.floor(memoryTime / 60);
+                const secs = memoryTime % 60;
+                document.getElementById('memory-time').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function flipCard(card) {
+            if (card.classList.contains('flipped') || card.classList.contains('matched') || flippedCards.length >= 2) {
+                return;
+            }
+
+            card.classList.add('flipped');
+            flippedCards.push(card);
+
+            if (flippedCards.length === 2) {
+                memoryAttempts++;
+                document.getElementById('memory-attempts').textContent = memoryAttempts;
+
+                if (flippedCards[0].dataset.emoji === flippedCards[1].dataset.emoji) {
+                    // Match
+                    flippedCards.forEach(c => c.classList.add('matched'));
+                    memoryPairs++;
+                    document.getElementById('memory-pairs').textContent = `${memoryPairs}/8`;
+                    flippedCards = [];
+
+                    if (memoryPairs === 8) {
+                        stopAllTimers();
+                        showVictory(`¡Completado en ${memoryAttempts} intentos y ${formatTime(memoryTime)}!`);
+                    }
+                } else {
+                    // No match
+                    setTimeout(() => {
+                        flippedCards.forEach(c => c.classList.remove('flipped'));
+                        flippedCards = [];
+                    }, 1000);
+                }
+            }
+        }
+
+        // Jigsaw Puzzle Functions
+        function initJigsawPuzzle() {
+            stopAllTimers();
+            jigsawPlaced = 0;
+            jigsawTime = 0;
+            document.getElementById('jigsaw-placed').textContent = '0/9';
+            document.getElementById('jigsaw-time').textContent = '0:00';
+
+            const board = document.getElementById('jigsaw-board');
+            const pieces = document.getElementById('jigsaw-pieces');
+            board.innerHTML = '';
+            pieces.innerHTML = '';
+
+            // Create drop zones
+            for (let i = 0; i < 9; i++) {
+                const zone = document.createElement('div');
+                zone.className = 'drop-zone';
+                zone.dataset.position = i;
+                zone.textContent = i + 1;
+                zone.style.left = `${(i % 3) * 133}px`;
+                zone.style.top = `${Math.floor(i / 3) * 133}px`;
+                board.appendChild(zone);
+            }
+
+            // Create pieces
+            let piecePositions = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+            piecePositions = piecePositions.sort(() => Math.random() - 0.5);
+
+            piecePositions.forEach((pos, index) => {
+                const piece = document.createElement('div');
+                piece.className = 'jigsaw-piece';
+                piece.dataset.position = pos;
+                piece.textContent = pos + 1;
+                piece.draggable = true;
+                piece.ondragstart = (e) => dragPiece(e, piece);
+                pieces.appendChild(piece);
+            });
+
+            // Add drop event listeners
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                zone.ondragover = (e) => e.preventDefault();
+                zone.ondrop = (e) => dropPiece(e, zone);
+            });
+
+            jigsawTimer = setInterval(() => {
+                jigsawTime++;
+                const mins = Math.floor(jigsawTime / 60);
+                const secs = jigsawTime % 60;
+                document.getElementById('jigsaw-time').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function dragPiece(e, piece) {
+            draggedPiece = piece;
+            e.dataTransfer.setData('text/plain', piece.dataset.position);
+        }
+
+        function dropPiece(e, zone) {
+            e.preventDefault();
+            const piecePos = parseInt(draggedPiece.dataset.position);
+            const zonePos = parseInt(zone.dataset.position);
+
+            if (piecePos === zonePos && !zone.classList.contains('filled')) {
+                zone.classList.add('filled');
+                zone.textContent = '';
+                draggedPiece.classList.add('placed');
+                jigsawPlaced++;
+                document.getElementById('jigsaw-placed').textContent = `${jigsawPlaced}/9`;
+
+                if (jigsawPlaced === 9) {
+                    stopAllTimers();
+                    showVictory(`¡Completado en ${formatTime(jigsawTime)}!`);
+                }
+            }
+        }
+
+        // Utility Functions
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function showVictory(message) {
+            document.getElementById('victory-message').textContent = message;
+            document.getElementById('victory-modal').classList.add('active');
+            createConfetti();
+        }
+
+        function closeModal() {
+            document.getElementById('victory-modal').classList.remove('active');
+            if (currentGame === 'sliding') initSlidingPuzzle();
+            else if (currentGame === 'memory') initMemoryGame();
+            else if (currentGame === 'jigsaw') initJigsawPuzzle();
+        }
+
+        function createConfetti() {
+            const colors = ['#f093fb', '#f5576c', '#4facfe', '#43e97b', '#f59e0b'];
+            for (let i = 0; i < 100; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 4000);
+                }, i * 30);
+            }
+        }
+
+        // Add pulse animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize first game
+        initSlidingPuzzle();
+    </script>
+</body>
+</html>
+
 
